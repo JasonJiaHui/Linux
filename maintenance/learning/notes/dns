@@ -1,0 +1,621 @@
+DAY_5-6 Summary_Programming
+
+
+理论：
+
+程序执行，可能有两类返回值
+	程序执行结果
+		程序状态返回代码（0-255）
+		0： 正确执行
+		1-255： 错误执行， 1，2，127 系统预留
+
+输出重定向
+>
+>>
+2>
+2>>
+&>
+
+撤销变量：
+unset VARNAME
+
+查看当前shell中变量：
+set
+
+查看当前shell中的环境变量：
+printenv
+env
+export
+
+脚本： 命令的堆砌，按照实际需要，结合命令流程控制机制实现的源程序
+
+shebang: 魔术
+#！/bin/bash
+# 注释行，不执行
+
+/dev/null: 软件设备， bit bucket, 数据黑洞
+
+	[root@Jason ~]# id tom &> /dev/null
+	[root@Jason ~]# echo $?
+	0
+
+
+静态语言： 编译型语言
+	强类型（变量）
+	事先转换成可执行格式
+	C, C++, JAVA, C#
+
+动态语言： 解释型语言， on the fly
+	弱类型
+	边解释边执行
+	PHP,SHELL,PYTHON,perl
+面向对象
+	JAVA, Python, perl, C++
+面向过程
+	Shell, C
+
+bash 变量类型：
+	环境变量
+	本地变量（局部变量）
+	位置变量
+	特殊变量
+
+本地变量：
+VARNAME=VALUE: 作用域为整个bash进程
+
+局部变量：
+local VARNAME=VALUE: 作用域为当前代码段
+
+环境变量： 作用域为当前shell进程及其子进程
+export VARNAME=VALUE
+VARNAME=VALUE export VARNAME
+	"导出"
+
+
+位置变量：
+	$1, $2,..
+	shift
+
+特殊变量：
+	$?: 上一个命令的执行状态返回值
+	$#(参数的个数)
+	$*:参数列表
+	$@:参数列表
+
+
+bash中如何实现条件判断：
+条件测试类型：
+	整数测试
+		-eq:
+		-ne:(not equal)
+		-gt:
+		-lt
+		-ge
+		-le
+	字符测试
+	文件测试
+		-e FILE:测试文件是否存在
+		-f FILE:测试文件是否为普通文件
+		-d FILE:测试指定路径是否为目录
+		-r FILE:测试当前用户对指定文件是否有读权限
+		-w FILE:...
+		-x FILE:...
+
+
+脚本编程
+	顺序结构
+	选择结构
+		if
+		case
+	循环结构
+		for
+		while（循环次数未知）
+		until
+
+
+for VAR in LIST;do
+	statement
+	...
+done
+
+
+
+for (( expr1 ; expr 2 ; expr3 )); do
+	statement
+	...
+done
+
+
+
+while循环
+语法
+
+	while CONDITION;do
+		statement
+		...
+	done
+
+
+until循环：
+
+until CONDITION:do
+	statement
+	...
+
+done
+
+
+
+函数：功能：function
+
+代码重用：
+
+库: so
+
+function:功能
+
+定义个函数
+
+function FUNCNAME
+
+FUNCTNAME(){
+	...
+}
+
+
+*******************************************************************************************
+
+脚本编程：
+
+
+练习，写一个脚本
+	能接受一个参数（文件路径）
+	判定：此参数如果是一个存在的文件，就显示’OK‘，否则显示’No such file.‘
+
+#!/bin/bash
+#
+if [ -e $1 ];then
+        echo 'ok'
+else
+        echo 'no'
+fi
+
+练习，脚本
+	给脚本传递两个参数（整数）
+	显示此两者之和，之积
+
+#!/bin/bash
+#
+if [ $# -ne 2 ];then
+        echo "Wrong input"
+        exit 2
+else
+        SUM_1=$[$1 + $2]
+        MUL_1=$[$1 * $2]
+        echo "The sum is $SUM_1"
+        echo "The mul is $MUL_1"
+fi
+
+
+
+练习：脚本
+	给定一个文件
+	如果是一个普通文件，就显示之
+	如果是一个目录，显示之
+	否则，此为无法识别文件
+
+
+#!/bin/bash
+#
+if [ -f $1 ];then
+        echo $1
+elif [ -d $1 ];then
+        echo $1
+else
+        echo "Unrecognized..."
+fi
+
+
+
+练习，写一个脚本，完成以下要求：
+	1.添加3个用户user1，user2，user3：但要先判断用户是否存在，不存在而后添加
+	2.添加完成后，显示一共添加了几个用户，当然，不能包括因为事先存在而没有添加的
+	3.最后显示当前系统上共有多少个用户。
+
+
+count=0
+for i in `seq 3`;do
+        if  ! id user$i &> /dev/null ;then
+                useradd user$i
+                echo "user$i" | passwd --stdin user$i &> /dev/null
+                count=$[$count+1]  <==> let count++
+        else
+                echo "user$i already exists..."
+        fi
+done
+
+USERS=`wc -l /etc/passwd | cut -d' ' -f1`
+
+echo "added $count users"
+echo "all $USERS users"
+
+
+
+练习，写一个脚本，完成以下要求
+给定一个用户
+	1. 如果其UID为0，就显示此为管理员t
+	2. 否则，就显示其为普通用户。
+
+
+#!/bin/bash
+#
+USER_ID=`id -u $1`
+if [ $USER_ID -eq 0 ];then
+        echo "This is administrator..."
+else
+        echo "This is common user..."
+fi
+
+
+
+
+
+练习，写一个脚本，完成以下任务
+判断当前系统上是否有用户的默认shell为bash
+	如果有，就显示有多少个这类的用户；否则就显示没有这类用户；
+
+
+#!/bin/bash
+#
+grep 'bash$' /etc/passwd &> /dev/null
+RETVAL=$?
+if [ $RETVAL -eq 0 ];then
+        NUM=`grep 'bash$' /etc/passwd | wc -l`
+        echo "There are $NUM users..."
+else
+        echo "There are no such users..."
+fi
+
+
+练习，写一个脚本，完成以下任务
+判断当前系统上是否有用户的默认shell为bash
+	如果有，就显示其中一个的用户名；否则就显示没有这类用户
+
+#!/bin/bash
+#
+grep 'bash$' /etc/passwd &> /dev/null
+RETVAL=$?
+if [ $RETVAL -eq 0 ];then
+        USER=`grep 'bash$' /etc/passwd | head -2 | tail -1 | cut -d: -f1`
+        echo "The $USER is one user..."
+else
+        echo "There are no such users..."
+fi
+
+
+
+练习，写一个脚本
+给定一个文件，比如/etc/inittab
+判断这个文件是否有空白行；
+如果有，则显示其空白行数；否则，显示没有空白行
+
+
+#!/bin/bash
+#
+NUM=`grep '^$' /etc/inittab | wc -l`
+if [ $NUM -ne 0 ];then
+        echo "There are $NUM blanklines..."
+else
+        echo "There are no blanklines..."
+fi
+
+
+练习，写一个脚本
+给定一个用户，判断其UID 和 GID是否一样
+如果一样，就显示次用户为’good guy‘，否则显示’bad guy‘
+
+
+#!/bin/bash
+#
+if [ $# -ne 1 ];then
+        echo "Wrong input..."
+        exit 1
+fi
+USER_ID=`id -u $1`
+GROUP_ID=`id -g $1`
+if [ $USER_ID -eq $GROUP_ID ];then
+        echo "Good Guy..."
+else
+        echo "Bad Guy..."
+fi
+
+
+练习，写个脚本（for(2),while,until）
+计算100以内的和
+
+#!/bin/bash
+#
+declare -i SUM=0
+for i in `seq 100`;do
+        SUM+=$i
+done
+echo "The sum is $SUM"
+
+
+#!/bin/bash
+#
+declare -i SUM=0
+for ((I=1;I<=100;I++));do
+        SUM+=$I
+done
+echo "The sum is $SUM"
+
+
+#!/bin/bash
+#
+declare -i SUM=0
+declare -i i=0
+while [ $i -le 100 ];do
+        let SUM+=$i
+        let i++
+done
+echo "The sum is $SUM"
+
+
+#!/bin/bash
+#
+declare -i SUM=0
+declare -i i=0
+until [ $i -gt 100 ];do
+        let SUM+=$i
+        let i++
+done
+echo "The sum is $SUM"
+
+
+练习，写一个脚本
+将输入的字符串转换为大写，若字符串为quit，则推出循环
+
+#!/bin/bash
+#
+read -p "Input something..." STR
+until [ $STR == 'quit' ];do
+        echo $STR | tr 'a-z' 'A-Z'
+        read -p "Input something..." STR
+done
+
+
+
+练习：写个脚本
+1）显示一个菜单给用户
+d|D) show disk usages
+m|M) show memory usages
+s|s) show swap usages
+*）quit
+2)当用户给定选项后显示相应的内容
+
+扩展：
+	当用户选择完成，显示相应信息后，不退出；而让用户再一次选择，再次显示相应内容；除了用户使用quit
+
+
+#!/bin/bash
+#
+list(){
+cat << EOF
+d|D) show disk usages
+m|M) show memory usages
+s|S) show swap usages
+EOF
+}
+
+list
+read -p "Your choice: " CHOICE
+while [ $CHOICE != 'quit' ];do
+        case $CHOICE in
+        d|D)
+                echo "Disk usages:"
+                df -h
+                ;;
+        m|M)
+                echo "Memory usages:"
+                free -m | grep 'Mem'
+                ;;
+        s|S)
+                echo "Disk usages:"
+                free -m | grep 'Swap'
+                ;;
+        *)
+                echo "Unknown..."
+                ;;
+        esac
+list
+read -p "Your choice again: " CHOICE
+done
+
+
+
+
+练习：写个脚本（前提：请为虚拟机新增一块硬盘，假设它为/dev/sdb）,为指定的硬盘创建分区；
+1.列出当前系统上所有的磁盘，让用户选择，如果选择quit则退出脚本；如果用户选择错误，就让用户重新选择。
+2.当用户选择后，提醒用户确认接下来的操作可能会损坏数据，并请用户确认；如果用户选择y就继续，否则，让用户重新选择；
+3.抹除那块硬盘上的所有分区（提示,抹除所有分区后执行sync命令，并让脚本睡眠3s后再分区）；并为其创建三个主分区，第一个20M，第二个512M，第三个128M
+	并且第三个为swap分区类型：（提示：将分区命令通过echo传送给fdisk即可实现）
+
+
+
+read -p "Choose one disk: " DISK
+
+declare -i DISK_FLAG=0
+declare -i WIPE_FLAG=0
+
+while [ $DISK != 'quit' ];do
+        if [ $DISK == '/dev/sda' ] || [ $DISK == '/dev/sdb' ] || [ $DISK == '/dev/sdc' ];then
+                DISK_FLAG=1
+                read -p "The data will be ruined on this operation,continue[y|n]: " ANS
+                if [ $ANS == 'y' ];then
+                        WIPE_FLAG=1
+                        break
+                else
+                        read -p "Choose one disk: " DISK
+                fi
+        else
+                read -p "Choose one disk: "DISK
+        fi
+done
+
+if [ $DISK_FLAG -eq 1 ] && [ $WIPE_FLAG -eq 1 ];then
+        dd if=/dev/zero of=$DISK bs=521 count=1
+        sync
+        sleep 3
+        partprobe $DISK
+        echo "  n
+                p
+                1
+                
+                +50M
+                n
+                p
+                2
+                
+                +512M
+                n
+                p
+                3
+                
+                +128M
+                t
+                3
+                82
+                w " | fdisk $DISK
+
+        partprobe $DISK
+        sync
+        sleep 3
+        mke2fs -j ${DISK}1
+        sleep 2
+        mke2fs -j ${DISK}2
+        sleep 2
+        mkswap ${DISK}3
+fi
+
+
+while 的特殊用法
+(1)
+while :;do
+...            <==>  while ture;do...done
+done
+
+
+#!/bin/bash
+#
+while :;do
+        read -p "File path: " PATH
+        if [ $PATH == "quit" ];then
+                break
+        elif [ -e $PATH ];then
+                echo "$PATH exists..."
+        else
+                echo "No $PATH..."
+        fi
+done
+
+
+(2)
+while read LINE;do
+	
+done < /PATH/TO/SOMEFILE
+
+
+
+
+
+写一个脚本：
+1.判断一个指定的bash脚本是否有语法错误，如果有错误，则提醒用户键入Q或者q无视错误并退出，其他任何键可以通过vim打开这个指定的脚本；
+2.如果用户通过vim打开编辑后保存退出时仍然有错误，则重复第一步的内容，否则就正常关闭退出
+
+
+#!/bin/bash
+#
+until `bash -n $1` &> /dev/null;do
+        read -p "Syntax error,press [q|Q] to quit,others for editing." ANS
+        case $ANS in
+        q|Q)
+                echo "Something wrong,quiting..."
+                exit 1
+                ;;
+        *)
+                vim $1
+                ;;
+        esac
+done
+
+
+写一个脚本，使用函数完成
+1.函数能够接受一个参数，参数为用户名；
+	判断一个用户是否存在
+	如果存在，就返回此用户的shell和UID，并返回正常状态值；
+	如果不存在，就说明此用户不存在，并返回错误状态值
+2.在主程序中调用函数
+
+扩展1.在主程序中，让用户自己输入用户名后，传递给函数来进行判断
+扩展2.在主程序中，输入用户名判断后不退出脚本，而是提示用户输入下一个用户名；如果用户输入的用户不存在，请用户重新输入；但如果用户输入的是q或Q就退出
+
+
+
+#!/bin/bash
+#
+USER(){
+        if id $1 &> /dev/null;then
+                echo "`grep ^$1 /etc/passwd | awk -F: '{print $3,$7}'`" 
+                return 0
+        else
+                echo "No such user..."
+                return 1
+        fi
+}
+
+read -p "Please input your username: " USER_NAME
+until [ $USER_NAME == 'Q' ] || [ $USER_NAME == 'q' ];do
+        USER $USER_NAME
+        if [ $? -eq 0 ];then
+                read -p "Please input the next username: " USER_NAME
+        else
+                read -p "Retry: " USER_NAME
+        fi
+done
+
+
+8.写一个脚本，分别显示当前系统上所有默认shell为bash的用户和默认shell为/sbin/nologin的用户，并统计各类shell下得用户总数。
+  显示结果形如：
+        BASH, 3uesrs, they are:
+        root,redhat,gentoo
+
+        NOLOGIN,2users,they are;
+        bin,ftp
+
+
+#!/bin/bash
+#
+FILE=/etc/passwd
+LINES=`wc -l $FILE | cut -d' ' -f1`
+COUNT_BASH=0
+COUNT_NOLOGIN=0
+USER_BASH=
+USER_NOLOGIN=
+for i in `seq $LINES`;do
+        SPE_USER=`head -n $i $FILE | tail -1 |cut -d: -f1`
+        SPE_SHELL=`head -n $i $FILE | tail -1 |cut -d: -f7`
+        if [ "$SPE_SHELL" == "/bin/bash" ];then
+                COUNT_BASH=$[$COUNT_BASH+1]
+                USER_BASH=$USER_BASH+$SPE_USER
+        elif [ "$SPE_SHELL" == "/sbin/nologin" ];then
+                COUNT_NOLOGIN=$[$COUNT_NOLOGIN + 1]
+                USER_NOLOGIN=$USER_NOLOGIN+$SPE_USER
+        fi
+done
+BASH_USER=`echo $USER_BASH | sed 's@+@, @g'`
+NOLOGIN_USER=`echo $USER_NOLOGIN | sed 's@+@, @g'`
+FINAL_BASH=`echo $BASH_USER | sed 's@^,@@'`
+FINAL_NOLOGIN=`echo $NOLOGIN_USER | sed 's@^,@@'`
+echo "BASH,$COUNT_BASH users,they are: $FINAL_BASH"                                                     
+echo "NOLOGIN,$COUNT_NOLOGIN users,they are: $FINAL_NOLOGIN" 
